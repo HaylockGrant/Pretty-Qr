@@ -22,12 +22,10 @@ def print_arrays(array)
     end
 end
 
-#returns the locations of a patern in a double array
+#returns the locations of a patern in a 2d array
 =begin
-The array will be iterated by row then column searching for the beggining of the patern
-
-
-
+The array will be iterated by row then column searching for the beggining of the pattern
+once the start is found it will check the surroundings cells for each piece of the pattern
 =end
 def find_pattern(pattern, array)
     locations = []
@@ -95,16 +93,25 @@ for i in 0..qr_array.length-1
     end
 end
 
+#prints the qr code
 print_arrays(qr_array)
+
+#initialize the eye patterns
 corner_patern = "xxxxxxx\nx_____x\nx_xxx_x\nx_xxx_x\nx_xxx_x\nx_____x\nxxxxxxx"
 corner_patern = s_to_array(corner_patern)
 small_eye_pattern = "xxxxx\nx___x\nx_x_x\nx___x\nxxxxx"
 small_eye_pattern = s_to_array(small_eye_pattern)
-print_arrays(small_eye_pattern)
-print_arrays(corner_patern)
 
+#copilot generated patern of what it thinks a lage eye pattern is, it serves no purpose, but I think its neat so I'm going to keep it
+large_eye_pattern = "xxxxxxx\nx_____x\nx_xxxxx\nx_____x\nxxxxxxx"
+large_eye_pattern = s_to_array(large_eye_pattern)
+#print_arrays(large_eye_pattern)
+
+#initialize the patterns for the eyes
 corner_locations = []
 small_eye_locations = []
 
+#finds the locations of the corner paterns and small eye paterns
 corner_locations = find_pattern(corner_patern, qr_array)
-puts corner_locations
+small_eye_locations = find_pattern(small_eye_pattern, qr_array)
+
