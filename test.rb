@@ -94,7 +94,7 @@ for i in 0..qr_array.length-1
 end
 
 #prints the qr code
-print_arrays(qr_array)
+#print_arrays(qr_array)
 
 #initialize the eye patterns
 corner_patern = "xxxxxxx\nx_____x\nx_xxx_x\nx_xxx_x\nx_xxx_x\nx_____x\nxxxxxxx"
@@ -115,3 +115,7 @@ small_eye_locations = []
 corner_locations = find_pattern(corner_patern, qr_array)
 small_eye_locations = find_pattern(small_eye_pattern, qr_array)
 
+#new class to define the shape, color, and corner properties of the cells
+class cell
+    
+end
