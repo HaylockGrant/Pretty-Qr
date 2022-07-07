@@ -18,6 +18,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  chunky_png
   httparty
   json
   rqrcode
