@@ -176,6 +176,7 @@ def find_pattern_pieces(initial_location, pattern)
             end
         end
     end
+    return locations
 end
 
 #takes in ARGV[0] and checks to see if its nil
@@ -234,6 +235,29 @@ small_eye_locations = []
 corner_locations = find_pattern(corner_patern, qr_array)
 small_eye_locations = find_pattern(small_eye_pattern, qr_array)
 
+#list of all of the corner patern and small eye patern pieces
+corner_location_pieces = []
+corner_locations.each do |location|
+    find_pattern_pieces(location, corner_patern).each do |piece|
+        corner_location_pieces.push(piece)
+    end
+end
+small_eye_location_pieces = []
+small_eye_locations.each do |location|
+    find_pattern_pieces(location, small_eye_pattern).each do |piece|
+        small_eye_location_pieces.push(piece)
+    end
+end
+
+#iterates through the corner location cordinates replaces the cornersqr code with 'c'
+corner_location_pieces.each do |location|
+    qr_array[location[0]][location[1]] = 'c'
+end
+#iterates through the eye location cordinates replaces the cornersqr code with 'e'
+small_eye_location_pieces.each do |location|
+    qr_array[location[0]][location[1]] = 'e'
+end
+
 #initialize the 2d array of cells with their base black and white colors
 cells = Array.new(qr_array.length) { Array.new(qr_array[0].length) }
 for i in 0..qr_array.length-1
@@ -251,5 +275,4 @@ for i in 0..qr_array.length-1
     end
 end
 
-#Test commit
-#additional test commit
+print_arrays(qr_array)
