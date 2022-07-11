@@ -3,6 +3,18 @@ require 'json'
 require 'rqrcode'
 require 'chunky_png'
 
+#this class will represent the various types of cell types and assign a color. 
+class CellType
+    attr_accessor :color
+    def initialize(color)
+        @color = color
+    end
+
+    def getColor()
+        return @color
+    end
+end
+
 #This class represents the color of the corner and allows other classes to referance and access it wihtout having duplicates.
 class Corner
     attr_accessor :color
@@ -15,10 +27,11 @@ class Corner
     end
 end
 
+#This class wraps the cell type and its corners together
 class Cell
-    attr_accessor :color , :ulCorner, :urCorner, :llCorner, :lrCorner
-    def initialize(color)
-        @color = color
+    attr_accessor :type, :ulCorner, :urCorner, :llCorner, :lrCorner
+    def initialize(type)
+        @type = type
         @ulCorner = nil
         @urCorner = nil
         @llCorner = nil
@@ -27,7 +40,7 @@ class Cell
 
     def getUL()
         if @ulCorner == nil
-            return @color
+            return @type.getColor()
         else
             return @ulCorner
         end
@@ -35,7 +48,7 @@ class Cell
 
     def getUR()
         if @urCorner == nil
-            return @color
+            return @type.getColor()
         else
             return @urCorner
         end
@@ -43,7 +56,7 @@ class Cell
 
     def getLL()
         if @llCorner == nil
-            return @color
+            return @type.getColor()
         else
             return @llCorner
         end
@@ -51,14 +64,14 @@ class Cell
 
     def getLR()
         if @lrCorner == nil
-            return @color
+            return @type.getColor()
         else
             return @lrCorner
         end
     end
 
     def getColor()
-        return @color
+        return @type.getColor()
     end
 end
 
@@ -258,21 +271,28 @@ small_eye_location_pieces.each do |location|
     qr_array[location[0]][location[1]] = 'e'
 end
 
+#initialize the types of cells that can be in the qr code
+cornerCellType = CellType.new(ChunkyPNG::Color::rgb(133,58,67))
+smallEyeCellType = CellType.new(ChunkyPNG::Color::rgb(133,58,67))
+backgroundCellType = CellType.new(ChunkyPNG::Color::rgb(255,255,255))
+forgroundCellType = CellType.new(ChunkyPNG::Color::rgb(0,0,0))
+
 #initialize the 2d array of cells with their base black and white colors
 cells = Array.new(qr_array.length) { Array.new(qr_array[0].length) }
 for i in 0..qr_array.length-1
     for j in 0..qr_array[i].length-1
         case qr_array[i][j]
-        when '_' #white
-            cells[i][j] = (Cell.new(ChunkyPNG::Color::rgb(255, 255, 255)))
-        when 'x' #black
-            cells[i][j] = (Cell.new(ChunkyPNG::Color::rgb(0, 0, 0)))
+        when '_' #background
+            cells[i][j] = (Cell.new(backgroundCellType))
+        when 'x' #forground
+            cells[i][j] = (Cell.new(forgroundCellType))
         when 'c' #corner
-            cells[i][j] = (Cell.new(ChunkyPNG::Color::rgb(133, 58, 67)))
-        when 'e' #eye
-            cells[i][j] = (Cell.new(ChunkyPNG::Color::rgb(133, 58, 67)))
+            cells[i][j] = (Cell.new(cornerCellType))
+        when 'e' #small eye
+            cells[i][j] = (Cell.new(smallEyeCellType))
         end
     end
 end
+
 
 print_arrays(qr_array)
