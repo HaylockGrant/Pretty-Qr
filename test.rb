@@ -1,4 +1,3 @@
-require 'httparty'
 require 'json'
 require 'rqrcode'
 require 'chunky_png'
@@ -72,6 +71,10 @@ class Cell
 
     def getColor()
         return @type.getColor()
+    end
+
+    def getType()
+        return @type
     end
 end
 
