@@ -6,15 +6,16 @@ if ARGV[0] == nil
     exit
 end
 
-length = 24
+length = 40
+interval = 10.0
 seed = Integer(Digest::MD5.hexdigest(ARGV[0]), 16)
 n2d = Perlin::Noise.new(2, :seed => seed)
 noise = []
 for i in 0..length
     noise[i] = []
-    o = i/(10.0)
+    o = i/(interval)
     for j in 0..length
-        k = j/(10.0)
+        k = j/(interval)
         noise[i][j] = n2d[o,k]
         if(noise[i][j] > 0.50)
             print "x"
@@ -24,4 +25,3 @@ for i in 0..length
     end
     puts
 end
-puts noise[0][0]

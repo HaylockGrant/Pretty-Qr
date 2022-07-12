@@ -197,7 +197,7 @@ end
 
 #takes in ARGV[0] and checks to see if its nil
 if ARGV[0] == nil
-  puts "Usage: ruby test.rb <url>"
+  puts "Usage: ruby test.rb <url> <quality>: l, m, q, h (default: h)"
   exit
 end
 
@@ -205,8 +205,29 @@ end
 url = ARGV[0]
 path = 'qr.png'
 
+#checks for additional paramiter and if the quality is present generates based on the quality
+if(ARGV[1] == nil)
+    qr = RQRCode::QRCode.new(url, :level => :h)
+else
+    if(ARGV[1] == 'l' || ARGV[1] == 'm' || ARGV[1] == 'q' || ARGV[1] == 'h')
+        case ARGV[1]
+        when 'l'
+            qr = RQRCode::QRCode.new(url, :level => :l)
+        when 'm'
+            qr = RQRCode::QRCode.new(url, :level => :m)
+        when 'q'
+            qr = RQRCode::QRCode.new(url, :level => :q)
+        when 'h'
+            qr = RQRCode::QRCode.new(url, :level => :h)
+        end
+    else
+        puts "Usage: ruby test.rb <url> <quality>: l, m, q, h (default: h)"
+        exit
+    end
+end
+
 #creates a qr code object with the url
-qr = RQRCode::QRCode.new(url, :level => :h)
+#qr = RQRCode::QRCode.new(url, :level => :h)
 
 #creates a png file with the qr code
 qr.as_png(:margin => 0).save("#{path}", :quality => 100)
@@ -299,3 +320,5 @@ end
 
 
 print_arrays(qr_array)
+
+puts qr_array.length
