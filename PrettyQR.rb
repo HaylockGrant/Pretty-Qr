@@ -1,6 +1,29 @@
 require 'json'
 require 'rqrcode'
 require 'chunky_png'
+require 'digest'
+require 'perlin_noise'
+
+#This function defines the noise algorithm and returns an array of noise as "x"s and " "s
+def noiseArray(seed, length)
+    interval = 10.0
+    seed = Integer(Digest::MD5.hexdigest(seed), 16)
+    n2d = Perlin::Noise.new(2, :seed => seed)
+    noise = []
+    for i in 0..length-1
+        noise[i] = []
+        o = (i+1)/(interval)
+        for j in 0..length-1
+            k = (j+1)/(interval)
+            if(n2d[o,k] > 0.50)
+                noise[i][j] = "x"
+            else
+                noise[i][j] = " "
+            end
+        end
+    end
+    return noise
+end
 
 #this class will represent the various types of cell types and assign a color. 
 class CellType
@@ -318,7 +341,6 @@ for i in 0..qr_array.length-1
     end
 end
 
-
 print_arrays(qr_array)
-
-puts qr_array.length
+noise = noiseArray(url, qr_array.length-1)
+print_arrays(noise)
