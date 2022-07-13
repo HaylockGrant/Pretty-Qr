@@ -15,7 +15,7 @@ def noiseArray(seed, length)
         o = (i+1)/(interval)
         for j in 0..length-1
             k = (j+1)/(interval)
-            if(n2d[o,k] < 0.50)
+            if(n2d[o,k] <= 0.50)
                 noise[i][j] = "x"
             else
                 noise[i][j] = " "
@@ -363,18 +363,71 @@ end
 
 #rounds the edge of the 4 corners of the qr code
 cells[0][0].getUL.setColor(backgroundCellType.getColor)
+if(cells[0][1].getType == cells[0][0].getType)
+    cells[0][0].getUR.setColor(cells[0][0].getColor)
+else
+    cells[0][0].getUR.setColor(backgroundCellType.getColor)
+    puts "There is an error with the corner rounding for the upper left eye"
+    raise 'fundemental error'
+end
+if(cells[1][0].getType == cells[0][0].getType)
+    cells[0][0].getLL.setColor(cells[0][0].getColor)
+else
+    cells[0][0].getLL.setColor(backgroundCellType.getColor)
+    puts "There is an error with the corner rounding for the upper left eye"
+    raise 'fundemental error'
+end
 cells[0][cells[0].length-1].getUR.setColor(backgroundCellType.getColor)
+if(cells[0][cells[0].length-1].getType == cells[1][cells[0].length-1].getType)
+    cells[0][cells[0].length-1].getLR.setColor(cells[0][cells[0].length-1].getColor)
+else
+    cells[0][cells[0].length-1].getLR.setColor(backgroundCellType.getColor)
+    puts "There is an error with the corner rounding for the upper right eye"
+    raise 'fundemental error'
+end
+if(cells[0][cells[0].length-1].getType == cells[0][cells[0].length-2].getType)
+    cells[0][cells[0].length-1].getUL.setColor(cells[0][cells[0].length-1].getColor)
+else
+    cells[0][cells[0].length-1].getUL.setColor(backgroundCellType.getColor)
+    puts "There is an error with the corner rounding for the upper right eye"
+    raise 'fundemental error'
+end
 cells[cells.length-1][0].getLL.setColor(backgroundCellType.getColor)
+if(cells[cells.length-1][0].getType == cells[cells.length-2][0].getType)
+    cells[cells.length-1][0].getUL.setColor(cells[cells.length-1][0].getColor)
+else
+    cells[cells.length-1][0].getUL.setColor(backgroundCellType.getColor)
+    puts "There is an error with the corner rounding for the lower left eye"
+    raise 'fundemental error'
+end
+if(cells[cells.length-1][0].getType == cells[cells.length-1][1].getType)
+    cells[cells.length-1][0].getLR.setColor(cells[cells.length-1][0].getColor)
+else
+    cells[cells.length-1][0].getLR.setColor(backgroundCellType.getColor)
+    puts "There is an error with the corner rounding for the lower left eye"
+    raise 'fundemental error'
+end
+#The lower right corner doesn't get error detection because its not an eye
 cells[cells.length-1][cells[0].length-1].getLR.setColor(backgroundCellType.getColor)
+if(cells[cells.length-1][cells[0].length-1].getType == cells[cells.length-1][cells[0].length-2].getType)
+    cells[cells.length-1][cells[0].length-1].getLL.setColor(cells[cells.length-1][cells[0].length-1].getColor)
+else
+    cells[cells.length-1][cells[0].length-1].getLL.setColor(backgroundCellType.getColor)
+end
+if(cells[cells.length-1][cells[0].length-1].getType == cells[cells.length-2][cells[0].length-1].getType)
+    cells[cells.length-1][cells[0].length-1].getUR.setColor(cells[cells.length-1][cells[0].length-1].getColor)
+else
+    cells[cells.length-1][cells[0].length-1].getUR.setColor(backgroundCellType.getColor)
+end
 
 #flattens the 4 edged of the qr code
 #top edge
-for i in 1..cells.length-2
+for i in 1..cells[0].length-2
     #scan top left corner
-    if(cells[0][i-1].getType == backgroundCellType)
-        cells[0][i].getUL.setColor(backgroundCellType.getColor)
-    else
+    if(cells[0][i-1].getType == cells[0][i].getType)
         cells[0][i].getUL.setColor(cells[0][i].getType.getColor)
+    else
+        cells[0][i].getUL.setColor(backgroundCellType.getColor)
     end
     #scan top right corner
     if(cells[0][i+1].getType == backgroundCellType)
@@ -383,4 +436,19 @@ for i in 1..cells.length-2
         cells[0][i].getUR.setColor(cells[0][i].getType.getColor)
     end
 end
-#TODO add the remaining 3 edges then program the center prossesing
+#right edge
+for i in 1..cells.length-2
+    #scan top right corner
+    if(cells[i][cells[0].length-1].getType == cells[i-1][cells[0].length-1].getType)
+        cells[i][cells[0].length-1].getUR.setColor(cells[i][cells[0].length-1].getColor)
+    else
+        cells[i][cells[0].length-1].getUR.setColor(backgroundCellType.getColor)
+    end
+    #scan lower right corner
+    if(cells[i][cells[0].length-1].getType == cells[i+1][cells[0].length-1].getType)
+        cells[i][cells[0].length-1].getLR.setColor(cells[i][cells[0].length-1].getColor)
+    else
+        cells[i][cells[0].length-1].getLR.setColor(backgroundCellType.getColor)
+    end
+end
+#TODO add the remaining 2 edges then program the center prossesing
