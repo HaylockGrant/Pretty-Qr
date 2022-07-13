@@ -15,7 +15,7 @@ def noiseArray(seed, length)
         o = (i+1)/(interval)
         for j in 0..length-1
             k = (j+1)/(interval)
-            if(n2d[o,k] > 0.50)
+            if(n2d[o,k] < 0.50)
                 noise[i][j] = "x"
             else
                 noise[i][j] = " "
@@ -47,6 +47,14 @@ class Corner
     def initialize()
         @color = nil;
     end
+
+    def getColor()
+        return @color
+    end
+
+    def setColor(color)
+        @color = color
+    end
 end
 
 #This class wraps the cell type and its corners together
@@ -54,42 +62,26 @@ class Cell
     attr_accessor :type, :ulCorner, :urCorner, :llCorner, :lrCorner
     def initialize(type)
         @type = type
-        @ulCorner = nil
-        @urCorner = nil
-        @llCorner = nil
-        @lrCorner = nil
+        @ulCorner = Corner.new()
+        @urCorner = Corner.new()
+        @llCorner = Corner.new()
+        @lrCorner = Corner.new()
     end
 
     def getUL()
-        if @ulCorner == nil
-            return @type.getColor()
-        else
-            return @ulCorner
-        end
+        return @ulCorner
     end
 
     def getUR()
-        if @urCorner == nil
-            return @type.getColor()
-        else
-            return @urCorner
-        end
+        return @urCorner
     end
 
     def getLL()
-        if @llCorner == nil
-            return @type.getColor()
-        else
-            return @llCorner
-        end
+        return @llCorner
     end
 
     def getLR()
-        if @lrCorner == nil
-            return @type.getColor()
-        else
-            return @lrCorner
-        end
+        return @lrCorner
     end
 
     def getColor()
@@ -103,12 +95,13 @@ end
 
 #Class CornerCross represents all the 4 corners of a 4 cell cross
 class Cross
-    attr_accessor :ul, :ur, :ll, :lr
-    def initialize(ul, ur, ll, lr)
+    attr_accessor :ul, :ur, :ll, :lr, :priorityType
+    def initialize(ul, ur, ll, lr, priorityType)
         @ul = ul
         @ur = ur
         @ll = ll
         @lr = lr
+        @priorityType = priorityType
     end
 
     #The following 4 methods are used to get the cell in the corosponding corner of the cross
@@ -126,6 +119,10 @@ class Cross
 
     def getLRCell()
         return @lr
+    end
+
+    def getPriorityType()
+        return @priorityType
     end
 
     #The following 4 methods are used to get the corner that is touching the cross
@@ -341,6 +338,49 @@ for i in 0..qr_array.length-1
     end
 end
 
-print_arrays(qr_array)
+#initialize 2d array of noise cells
 noise = noiseArray(url, qr_array.length-1)
-print_arrays(noise)
+#converts the noise to an array of celltypes
+for i in 0..noise.length-1
+    for j in 0..noise[i].length-1
+        if noise[i][j] == "x"
+            noise[i][j] = (Cell.new(forgroundCellType))
+        else
+            noise[i][j] = (Cell.new(backgroundCellType))
+        end
+    end
+end
+
+#initialize the 2d array of cross sections. Each cross section is the 4 touching cells
+#and determined if there is forground or background priority based off the noise generated
+cross = []
+for i in 0..qr_array.length-2
+    cross[i] = []
+    for j in 0..qr_array[i].length-2
+        cross[i][j] = Cross.new(cells[i][j], cells[i][j+1], cells[i+1][j], cells[i+1][j+1], noise[i][j])
+    end
+end
+
+#rounds the edge of the 4 corners of the qr code
+cells[0][0].getUL.setColor(backgroundCellType.getColor)
+cells[0][cells[0].length-1].getUR.setColor(backgroundCellType.getColor)
+cells[cells.length-1][0].getLL.setColor(backgroundCellType.getColor)
+cells[cells.length-1][cells[0].length-1].getLR.setColor(backgroundCellType.getColor)
+
+#flattens the 4 edged of the qr code
+#top edge
+for i in 1..cells.length-2
+    #scan top left corner
+    if(cells[0][i-1].getType == backgroundCellType)
+        cells[0][i].getUL.setColor(backgroundCellType.getColor)
+    else
+        cells[0][i].getUL.setColor(cells[0][i].getType.getColor)
+    end
+    #scan top right corner
+    if(cells[0][i+1].getType == backgroundCellType)
+        cells[0][i].getUR.setColor(backgroundCellType.getColor)
+    else
+        cells[0][i].getUR.setColor(cells[0][i].getType.getColor)
+    end
+end
+#TODO add the remaining 3 edges then program the center prossesing
