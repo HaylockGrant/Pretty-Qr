@@ -1,7 +1,6 @@
-require 'json'
 require 'rqrcode'
 require 'chunky_png'
-require 'digest'
+require 'digest/murmurhash'
 require 'perlin_noise'
 
 #This function defines the noise algorithm and returns an array of noise as "x"s and " "s
@@ -93,6 +92,27 @@ class Cell
     end
 end
 
+#This class represents the cell priority types, each PriorityType will be a list of cell types that will be a priority
+class PriorityType
+    attr_accessor :cellTypes
+    def initialize(*cellTypes)
+        @cellTypes = cellTypes
+    end
+
+    def getCellTypes()
+        return @cellTypes
+    end
+
+    def contains(cellType)
+        for i in 0..@cellTypes.length-1
+            if(@cellTypes[i] == cellType)
+                return true
+            end
+        end
+        return false
+    end
+end
+
 #Class CornerCross represents all the 4 corners of a 4 cell cross
 class Cross
     attr_accessor :ul, :ur, :ll, :lr, :priorityType
@@ -126,7 +146,6 @@ class Cross
     end
 
     #The following 4 methods are used to get the corner that is touching the cross
-
     def getULCorner()
         return @ul.getLR()
     end
@@ -141,6 +160,24 @@ class Cross
 
     def getLRCorner()
         return @lr.getUL()
+    end
+
+    #the following 4 methods will determine the corner colors based on their neighbors
+    #TODO implement functions to determine the corner colors based on the priority type
+    def calculateConrerUL()
+       
+    end
+
+    def calculateCornerUR()
+
+    end
+
+    def calculateCornerLL()
+
+    end
+
+    def calculateCornerLR()
+
     end
 end
 
@@ -321,6 +358,10 @@ smallEyeCellType = CellType.new(ChunkyPNG::Color::rgb(133,58,67))
 backgroundCellType = CellType.new(ChunkyPNG::Color::rgb(255,255,255))
 forgroundCellType = CellType.new(ChunkyPNG::Color::rgb(0,0,0))
 
+#intialize the cell type groups
+backgroundPriorityType = PriorityType.new(backgroundCellType)
+forgroundPriorityType = PriorityType.new(forgroundCellType, cornerCellType, smallEyeCellType)
+
 #initialize the 2d array of cells with their base black and white colors
 cells = Array.new(qr_array.length) { Array.new(qr_array[0].length) }
 for i in 0..qr_array.length-1
@@ -340,16 +381,6 @@ end
 
 #initialize 2d array of noise cells
 noise = noiseArray(url, qr_array.length-1)
-#converts the noise to an array of celltypes
-for i in 0..noise.length-1
-    for j in 0..noise[i].length-1
-        if noise[i][j] == "x"
-            noise[i][j] = (Cell.new(forgroundCellType))
-        else
-            noise[i][j] = (Cell.new(backgroundCellType))
-        end
-    end
-end
 
 #initialize the 2d array of cross sections. Each cross section is the 4 touching cells
 #and determined if there is forground or background priority based off the noise generated
@@ -357,7 +388,13 @@ cross = []
 for i in 0..qr_array.length-2
     cross[i] = []
     for j in 0..qr_array[i].length-2
-        cross[i][j] = Cross.new(cells[i][j], cells[i][j+1], cells[i+1][j], cells[i+1][j+1], noise[i][j])
+        case noise[i][j]
+        when "x"
+            cross[i][j] = Cross.new(cells[i][j], cells[i][j+1], cells[i+1][j], cells[i+1][j+1], forgroundPriorityType)
+        else
+            puts noise[i][j]
+            cross[i][j] = Cross.new(cells[i][j], cells[i][j+1], cells[i+1][j], cells[i+1][j+1], backgroundPriorityType)
+        end
     end
 end
 
@@ -451,4 +488,36 @@ for i in 1..cells.length-2
         cells[i][cells[0].length-1].getLR.setColor(backgroundCellType.getColor)
     end
 end
-#TODO add the remaining 2 edges then program the center prossesing
+#bottom edge
+for i in 1..cells[cells.length-1].length-2
+    #scan lower left corner
+    if(cells[cells.length-1][i].getType == cells[cells.length-1][i-1].getType)
+        cells[cells.length-1][i].getLL.setColor(cells[cells.length-1][i].getColor)
+    else
+        cells[cells.length-1][i].getLL.setColor(backgroundCellType.getColor)
+    end
+    #scan lower right corner
+    if(cells[cells.length-1][i].getType == cells[cells.length-1][i+1].getType)
+        cells[cells.length-1][i].getLR.setColor(cells[cells.length-1][i].getColor)
+    else
+        cells[cells.length-1][i].getLR.setColor(backgroundCellType.getColor)
+    end
+end
+#left edge
+for i in 1..cells.length-2
+    #scan top left corner
+    if(cells[i][0].getType == cells[i-1][0].getType)
+        cells[i][0].getUL.setColor(cells[i][0].getColor)
+    else
+        cells[i][0].getUL.setColor(backgroundCellType.getColor)
+    end
+    #scan lower left corner
+    if(cells[i][0].getType == cells[i+1][0].getType)
+        cells[i][0].getLL.setColor(cells[i][0].getColor)
+    else
+        cells[i][0].getLL.setColor(backgroundCellType.getColor)
+    end
+end
+
+
+#TODO add centeral prossesing. I'll most likely implement a function in cross to have all edges of a cros check themselves.
