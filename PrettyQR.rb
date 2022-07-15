@@ -90,13 +90,22 @@ class Cell
     def getType()
         return @type
     end
+
+    def validateCorners()
+        if(@ulCorner.getColor() == nil || @urCorner.getColor() == nil || @llCorner.getColor() == nil || @lrCorner.getColor() == nil)
+            return false
+        else
+            return true
+        end
+    end
 end
 
 #This class represents the cell priority types, each PriorityType will be a list of cell types that will be a priority
 class PriorityType
     attr_accessor :cellTypes
-    def initialize(*cellTypes)
+    def initialize(*cellTypes, background)
         @cellTypes = cellTypes
+        @background = background
     end
 
     def getCellTypes()
@@ -110,6 +119,10 @@ class PriorityType
             end
         end
         return false
+    end
+
+    def getBackground()
+        return @background
     end
 end
 
@@ -164,23 +177,82 @@ class Cross
 
     #the following 4 methods will determine the corner colors based on their neighbors
     #TODO implement functions to determine the corner colors based on the priority type
+
     def calculateConrerUL()
-       
+        if(@ul.getType() == @ur.getType() || @ul.getType() == @ll.getType())
+            getULCorner.setColor(@ul.getColor())
+        else
+            if(@priorityType.contains(@ul.getType()) && @ul.getType() == @lr.getType())
+                getULCorner.setColor(@ul.getColor())
+            else
+                if(@ur.getType() == @ll.getType() && priorityType.contains(@ur.getType()))
+                    getULCorner.setColor(@ur.getColor())
+                else
+                    getULCorner.setColor(@priorityType.getBackground())
+                end
+            end
+        end
     end
 
     def calculateCornerUR()
-
+        if(@ur.getType() == @ul.getType() || @ur.getType() == @lr.getType())
+            getURCorner.setColor(@ur.getColor())
+        else
+            if(@priorityType.contains(@ur.getType()) && @ur.getType() == @ll.getType())
+                getURCorner.setColor(@ur.getColor())
+            else
+                if(@ul.getType() == @lr.getType() && priorityType.contains(@ul.getType()))
+                    getURCorner.setColor(@ul.getColor())
+                else
+                    getURCorner.setColor(@priorityType.getBackground())
+                end
+            end
+        end
     end
 
     def calculateCornerLL()
-
+        if(@ll.getType() == @ul.getType() || @ll.getType() == @lr.getType())
+            getLLCorner.setColor(@ll.getColor())
+        else
+            if(@priorityType.contains(@ll.getType()) && @ll.getType() == @ur.getType())
+                getLLCorner.setColor(@ll.getColor())
+            else
+                if(@ul.getType() == @lr.getType() && priorityType.contains(@ul.getType()))
+                    getLLCorner.setColor(@ul.getColor())
+                else
+                    getLLCorner.setColor(@priorityType.getBackground())
+                end
+            end
+        end
     end
 
     def calculateCornerLR()
+        #if follows the side by side rule
+        if(@ur.getType() == @lr.getType() || @ll.getType() == @lr.getType())
+            getLRCorner.setColor(@lr.getColor())
+        else
+            #if has a priority type and same adjacent
+            if(@priorityType.contains(@lr.getType) && @ul.getType() == @lr.getType())
+                getLRCorner.setColor(@lr.getColor())
+            else
+                #if neibors are simmaler and domanaint inherit their color
+                #else 
+                if(@ur.getType == @ll.getType() && priorityType.contains(@ur.getType))
+                    getLRCorner.setColor(@ur.getColor())
+                else
+                    getLRCorner.setColor(priorityType.getBackground().getColor())
+                end
+            end 
+        end
+    end
 
+    def calculateCorners()
+        calculateConrerUL()
+        calculateCornerUR()
+        calculateCornerLL()
+        calculateCornerLR()
     end
 end
-
 
 #this function takes a string and turns it into a double array of characters
 def s_to_array(string)
@@ -237,7 +309,6 @@ def find_pattern(pattern, array)
     end
     return locations
 end
-
 
 #This function will calculate the locations of the individual pieces of the pattern given the locations of the pattern
 def find_pattern_pieces(initial_location, pattern)
@@ -359,8 +430,9 @@ backgroundCellType = CellType.new(ChunkyPNG::Color::rgb(255,255,255))
 forgroundCellType = CellType.new(ChunkyPNG::Color::rgb(0,0,0))
 
 #intialize the cell type groups
-backgroundPriorityType = PriorityType.new(backgroundCellType)
-forgroundPriorityType = PriorityType.new(forgroundCellType, cornerCellType, smallEyeCellType)
+backgroundPriorityType = PriorityType.new(backgroundCellType, backgroundCellType)
+#forgroundPriorityType = PriorityType.new(forgroundCellType, cornerCellType, smallEyeCellType)
+forgroundPriorityType = PriorityType.new(forgroundCellType, backgroundCellType)
 
 #initialize the 2d array of cells with their base black and white colors
 cells = Array.new(qr_array.length) { Array.new(qr_array[0].length) }
@@ -392,7 +464,6 @@ for i in 0..qr_array.length-2
         when "x"
             cross[i][j] = Cross.new(cells[i][j], cells[i][j+1], cells[i+1][j], cells[i+1][j+1], forgroundPriorityType)
         else
-            puts noise[i][j]
             cross[i][j] = Cross.new(cells[i][j], cells[i][j+1], cells[i+1][j], cells[i+1][j+1], backgroundPriorityType)
         end
     end
@@ -519,5 +590,19 @@ for i in 1..cells.length-2
     end
 end
 
+#calculates all of the corners of the reamining cells
+for i in 0..cross.length-1
+    for j in 0..cross[i].length-1
+        cross[i][j].calculateCorners()
+    end
+end
 
-#TODO add centeral prossesing. I'll most likely implement a function in cross to have all edges of a cros check themselves.
+#test validates that all corners have been calculated
+for i in 0..cells.length-1
+    for j in 0..cells.length-1
+        if(cells[i][j].validateCorners() == false)
+            puts error
+            exit
+        end
+    end
+end
