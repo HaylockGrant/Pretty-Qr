@@ -176,8 +176,6 @@ class Cross
     end
 
     #the following 4 methods will determine the corner colors based on their neighbors
-    #TODO implement functions to determine the corner colors based on the priority type
-
     def calculateConrerUL()
         if(@ul.getType() == @ur.getType() || @ul.getType() == @ll.getType())
             getULCorner.setColor(@ul.getColor())
@@ -273,6 +271,87 @@ def print_arrays(array)
     end
 end
 
+#this class wraps the canvas and renders the qrcode
+class Canvas
+    #initilize fixed cell sizes. To change the cell size you'll need to reporogram the cell corner paterns
+    attr_reader :CellSize, :CornerSize
+    CellSize = 66
+    CornerSize = 33
+
+    #Initilize static pixel shapes
+    @@upperLeftNormalPixels = '_'*16 + 'x'*17 + "\n" +
+    '_'*13 + 'x'*20 + "\n" +
+    '_'*11 + 'x'*22 + "\n" +
+    '_'*9 + 'x'*24 + "\n" +
+    '_'*8 + 'x'*25 + "\n" +
+    '_'*7 + 'x'*26 + "\n" +
+    '_'*6 + 'x'*27 + "\n" +
+    '_'*5 + 'x'*28 + "\n" +
+    '_'*4 + 'x'*29 + "\n" +
+    '_'*3 + 'x'*30 + "\n" +
+    '_'*3 + 'x'*30 + "\n" +
+    '_'*2 + 'x'*31 + "\n" +
+    '_'*2 + 'x'*31 + "\n" +
+    '_'*1 + 'x'*32 + "\n" +
+    '_'*1 + 'x'*32 + "\n" +
+    '_'*1 + 'x'*32 + "\n" +
+    ('x'*33 + "\n")*16 + 'x'*33
+    @@upperLeftNormalPixels = s_to_array(@@upperLeftNormalPixels)
+    
+    #flip upper left normal pixels to become lower left normal pixels
+    @@lowerLeftNormalPixels = []
+    for i in 0..@@upperLeftNormalPixels.length-1
+        o = @@upperLeftNormalPixels.length-1 - i
+        @@lowerLeftNormalPixels[i] = @@upperLeftNormalPixels[o]
+    end
+
+    #flip upper left normal pixels to become upper right normal pixels
+    @@upperRightNormalPixels = []
+    for i in 0..@@upperLeftNormalPixels.length-1
+        o = @@upperLeftNormalPixels.length-1 - i
+        @@upperRightNormalPixels[i] = []
+        for j in 0..@@upperLeftNormalPixels[o].length-1
+            k = @@upperLeftNormalPixels[o].length-1 - j
+            @@upperRightNormalPixels[i][j] = @@upperLeftNormalPixels[i][k]
+        end
+    end
+
+    #flip upper left normal pixels along both axis to become lower right normal pixels
+    @@lowerRightNormalPixels = []
+    for i in 0..@@upperLeftNormalPixels.length-1
+        o = @@upperLeftNormalPixels.length-1 - i
+        @@lowerRightNormalPixels[i] = []
+        for j in 0..@@upperLeftNormalPixels[o].length-1
+            k = @@upperLeftNormalPixels[o].length-1 - j
+            @@lowerRightNormalPixels[i][j] = @@upperLeftNormalPixels[o][k]
+        end
+    end
+
+    def upperLeftNormalPixels
+        @@upperLeftNormalPixels
+    end
+    def upperRightNormalPixels
+        @@upperRightNormalPixels
+    end
+    def lowerLeftNormalPixels
+        @@lowerLeftNormalPixels
+    end
+    def lowerRightNormalPixels
+        @@lowerRightNormalPixels
+    end
+
+    #initilize the canvas with a width, height, and border all in cells
+    attr_accessor :canvas, :width, :height, :border
+    def initialize(widthInCells, heightInCells, borderInCells)
+        @width = widthInCells
+        @height = heightInCells
+        @border = borderInCells
+        @canvas = ChunkyPNG::Canvas.new(@width*CellSize+@border*CellSize*2, @height*CellSize+@border*CellSize*2, ChunkyPNG::Color::TRANSPARENT)
+    end
+
+    #TODO implement render / draw functions
+end
+
 #returns the locations of a patern in a 2d array
 =begin
 The array will be iterated by row then column searching for the beggining of the pattern
@@ -325,7 +404,7 @@ end
 
 #takes in ARGV[0] and checks to see if its nil
 if ARGV[0] == nil
-  puts "Usage: ruby test.rb <url> <quality>: l, m, q, h (default: h)"
+  puts "Usage: ruby test.rb <url> <options>"
   exit
 end
 
@@ -354,9 +433,6 @@ else
     end
 end
 
-#creates a qr code object with the url
-#qr = RQRCode::QRCode.new(url, :level => :h)
-
 #creates a png file with the qr code
 qr.as_png(:margin => 0).save("#{path}", :quality => 100)
 
@@ -378,9 +454,6 @@ for i in 0..qr_array.length-1
     end
 end
 
-#prints the qr code
-#print_arrays(qr_array)
-
 #initialize the eye patterns
 corner_patern = "xxxxxxx\nx_____x\nx_xxx_x\nx_xxx_x\nx_xxx_x\nx_____x\nxxxxxxx"
 corner_patern = s_to_array(corner_patern)
@@ -390,7 +463,6 @@ small_eye_pattern = s_to_array(small_eye_pattern)
 #copilot generated patern of what it thinks a lage eye pattern is, it serves no purpose, but I think its neat so I'm going to keep it
 large_eye_pattern = "xxxxxxx\nx_____x\nx_xxxxx\nx_____x\nxxxxxxx"
 large_eye_pattern = s_to_array(large_eye_pattern)
-#print_arrays(large_eye_pattern)
 
 #initialize the patterns for the eyes
 corner_locations = []
@@ -601,8 +673,13 @@ end
 for i in 0..cells.length-1
     for j in 0..cells.length-1
         if(cells[i][j].validateCorners() == false)
-            puts error
+            puts "error validating corners"
+            raise 'fundemental error'
             exit
         end
     end
 end
+
+#TODO initilize a canvas and render all the cells
+#Testing for ChunkyPNG drawings
+canvas = Canvas.new(cells[0].length, cells.length, 3)
