@@ -92,7 +92,7 @@ class Cell
     end
 
     def validateCorners()
-        if(@ulCorner.getColor() == nil || @urCorner.getColor() == nil || @llCorner.getColor() == nil || @lrCorner.getColor() == nil)
+        if((@ulCorner.getColor() == nil || @urCorner.getColor() == nil || @llCorner.getColor() == nil || @lrCorner.getColor() == nil))
             return false
         else
             return true
@@ -175,6 +175,8 @@ class Cross
         return @lr.getUL()
     end
 
+    #TODO fix logic with corner caluclations
+
     #the following 4 methods will determine the corner colors based on their neighbors
     def calculateConrerUL()
         if(@ul.getType() == @ur.getType() || @ul.getType() == @ll.getType())
@@ -186,7 +188,7 @@ class Cross
                 if(@ur.getType() == @ll.getType() && priorityType.contains(@ur.getType()))
                     getULCorner.setColor(@ur.getColor())
                 else
-                    getULCorner.setColor(@priorityType.getBackground())
+                    getULCorner.setColor(@priorityType.getBackground.getColor())
                 end
             end
         end
@@ -202,7 +204,7 @@ class Cross
                 if(@ul.getType() == @lr.getType() && priorityType.contains(@ul.getType()))
                     getURCorner.setColor(@ul.getColor())
                 else
-                    getURCorner.setColor(@priorityType.getBackground())
+                    getURCorner.setColor(@priorityType.getBackground.getColor())
                 end
             end
         end
@@ -218,7 +220,7 @@ class Cross
                 if(@ul.getType() == @lr.getType() && priorityType.contains(@ul.getType()))
                     getLLCorner.setColor(@ul.getColor())
                 else
-                    getLLCorner.setColor(@priorityType.getBackground())
+                    getLLCorner.setColor(@priorityType.getBackground.getColor())
                 end
             end
         end
@@ -342,14 +344,81 @@ class Canvas
 
     #initilize the canvas with a width, height, and border all in cells
     attr_accessor :canvas, :width, :height, :border
-    def initialize(widthInCells, heightInCells, borderInCells)
+    def initialize(widthInCells, heightInCells, borderInCells = 3)
         @width = widthInCells
         @height = heightInCells
         @border = borderInCells
         @canvas = ChunkyPNG::Canvas.new(@width*CellSize+@border*CellSize*2, @height*CellSize+@border*CellSize*2, ChunkyPNG::Color::TRANSPARENT)
     end
+    
+    #this function renders all 4 corners of a cell on the canvas
+    def render(cellX,cellY,cell)
+        renderUperLeftNormalCorner(cellX,cellY,cell.getColor(),cell.getUL.getColor())
+        renderUperRightNormalCorner(cellX,cellY,cell.getColor(),cell.getUR.getColor())
+        renderLowerLeftNormalCorner(cellX,cellY,cell.getColor(),cell.getLL.getColor())
+        renderLowerRightNormalCorner(cellX,cellY,cell.getColor(),cell.getLR.getColor())
+    end
 
-    #TODO implement render / draw functions
+    def renderUperLeftNormalCorner(cellX,cellY,forground,corner)
+        yOffset = cellX*CellSize+@border*CellSize
+        xOffset = cellY*CellSize+@border*CellSize
+        for i in 0..@@upperLeftNormalPixels.length-1
+            for j in 0..@@upperLeftNormalPixels[i].length-1
+                if @@upperLeftNormalPixels[i][j] == 'x'
+                    @canvas[i+xOffset,j+yOffset] = forground
+                elsif(@@upperLeftNormalPixels[i][j] == '_')
+                    @canvas[i+xOffset,j+yOffset] = corner
+                end
+            end
+        end
+    end
+
+    def renderUperRightNormalCorner(cellX,cellY,forground,corner)
+        yOffset = cellX*CellSize+@border*CellSize+CornerSize
+        xOffset = cellY*CellSize+@border*CellSize
+        for i in 0..@@upperRightNormalPixels.length-1
+            for j in 0..@@upperRightNormalPixels[i].length-1
+                if @@upperRightNormalPixels[i][j] == 'x'
+                    @canvas[i+xOffset,j+yOffset] = forground
+                elsif(@@upperRightNormalPixels[i][j] == '_')
+                    @canvas[i+xOffset,j+yOffset] = corner
+                end
+            end
+        end
+    end
+
+    def renderLowerLeftNormalCorner(cellX,cellY,forground,corner)
+        yOffset = cellX*CellSize+@border*CellSize
+        xOffset = cellY*CellSize+@border*CellSize+CornerSize
+        for i in 0..@@lowerLeftNormalPixels.length-1
+            for j in 0..@@lowerLeftNormalPixels[i].length-1
+                if @@lowerLeftNormalPixels[i][j] == 'x'
+                    @canvas[i+xOffset,j+yOffset] = forground
+                elsif(@@lowerLeftNormalPixels[i][j] == '_')
+                    @canvas[i+xOffset,j+yOffset] = corner
+                end
+            end
+        end
+    end
+
+    def renderLowerRightNormalCorner(cellX,cellY,forground,corner)
+        yOffset = cellX*CellSize+@border*CellSize+CornerSize
+        xOffset = cellY*CellSize+@border*CellSize+CornerSize
+        for i in 0..@@lowerRightNormalPixels.length-1
+            for j in 0..@@lowerRightNormalPixels[i].length-1
+                if @@lowerRightNormalPixels[i][j] == 'x'
+                    @canvas[i+xOffset,j+yOffset] = forground
+                elsif(@@lowerRightNormalPixels[i][j] == '_')
+                    @canvas[i+xOffset,j+yOffset] = corner
+                end
+            end
+        end
+    end
+
+    #this function saves the canvas to a file
+    def save(fileName)
+        @canvas.save(fileName)
+    end
 end
 
 #returns the locations of a patern in a 2d array
@@ -681,5 +750,12 @@ for i in 0..cells.length-1
 end
 
 #TODO initilize a canvas and render all the cells
+
 #Testing for ChunkyPNG drawings
-canvas = Canvas.new(cells[0].length, cells.length, 3)
+canvas = Canvas.new(cells[0].length, cells.length,3)
+for i in 0..cells.length-1
+    for j in 0..cells[i].length-1
+        canvas.render(i,j,cells[i][j])
+    end
+end
+canvas.save("test.png")
