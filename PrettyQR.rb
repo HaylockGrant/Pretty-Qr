@@ -175,8 +175,7 @@ class Cross
         return @lr.getUL()
     end
 
-    #TODO fix logic with corner caluclations
-
+    #TODO fix the corner calculations for background cells where corners with the 3 like neighbors rule doesn't work
     #the following 4 methods will determine the corner colors based on their neighbors
     def calculateConrerUL()
         if(@ul.getType() == @ur.getType() || @ul.getType() == @ll.getType())
@@ -195,12 +194,16 @@ class Cross
     end
 
     def calculateCornerUR()
+        #if follows the side by side rule
         if(@ur.getType() == @ul.getType() || @ur.getType() == @lr.getType())
             getURCorner.setColor(@ur.getColor())
         else
+            #if has a priority type and same adjacent
             if(@priorityType.contains(@ur.getType()) && @ur.getType() == @ll.getType())
                 getURCorner.setColor(@ur.getColor())
             else
+                #if neibors are simmaler and domanaint inherit their color
+                #else 
                 if(@ul.getType() == @lr.getType() && priorityType.contains(@ul.getType()))
                     getURCorner.setColor(@ul.getColor())
                 else
@@ -344,11 +347,11 @@ class Canvas
 
     #initilize the canvas with a width, height, and border all in cells
     attr_accessor :canvas, :width, :height, :border
-    def initialize(widthInCells, heightInCells, borderInCells = 3)
+    def initialize(widthInCells, heightInCells, borderInCells = 3, backgroundColor = ChunkyPNG::Color::WHITE)
         @width = widthInCells
         @height = heightInCells
         @border = borderInCells
-        @canvas = ChunkyPNG::Canvas.new(@width*CellSize+@border*CellSize*2, @height*CellSize+@border*CellSize*2, ChunkyPNG::Color::TRANSPARENT)
+        @canvas = ChunkyPNG::Canvas.new(@width*CellSize+@border*CellSize*2, @height*CellSize+@border*CellSize*2, backgroundColor)
     end
     
     #this function renders all 4 corners of a cell on the canvas
@@ -359,57 +362,58 @@ class Canvas
         renderLowerRightNormalCorner(cellX,cellY,cell.getColor(),cell.getLR.getColor())
     end
 
+    #each function renders a normal corner on the canvas
     def renderUperLeftNormalCorner(cellX,cellY,forground,corner)
-        yOffset = cellX*CellSize+@border*CellSize
         xOffset = cellY*CellSize+@border*CellSize
+        yOffset = cellX*CellSize+@border*CellSize
         for i in 0..@@upperLeftNormalPixels.length-1
             for j in 0..@@upperLeftNormalPixels[i].length-1
                 if @@upperLeftNormalPixels[i][j] == 'x'
-                    @canvas[i+xOffset,j+yOffset] = forground
+                    @canvas[j+xOffset,i+yOffset] = forground
                 elsif(@@upperLeftNormalPixels[i][j] == '_')
-                    @canvas[i+xOffset,j+yOffset] = corner
+                    @canvas[j+xOffset,i+yOffset] = corner
                 end
             end
         end
     end
 
     def renderUperRightNormalCorner(cellX,cellY,forground,corner)
-        yOffset = cellX*CellSize+@border*CellSize+CornerSize
-        xOffset = cellY*CellSize+@border*CellSize
+        xOffset = cellY*CellSize+@border*CellSize+CornerSize
+        yOffset = cellX*CellSize+@border*CellSize
         for i in 0..@@upperRightNormalPixels.length-1
             for j in 0..@@upperRightNormalPixels[i].length-1
                 if @@upperRightNormalPixels[i][j] == 'x'
-                    @canvas[i+xOffset,j+yOffset] = forground
+                    @canvas[j+xOffset,i+yOffset] = forground
                 elsif(@@upperRightNormalPixels[i][j] == '_')
-                    @canvas[i+xOffset,j+yOffset] = corner
+                    @canvas[j+xOffset,i+yOffset] = corner
                 end
             end
         end
     end
 
     def renderLowerLeftNormalCorner(cellX,cellY,forground,corner)
-        yOffset = cellX*CellSize+@border*CellSize
-        xOffset = cellY*CellSize+@border*CellSize+CornerSize
+        xOffset = cellY*CellSize+@border*CellSize
+        yOffset = cellX*CellSize+@border*CellSize+CornerSize
         for i in 0..@@lowerLeftNormalPixels.length-1
             for j in 0..@@lowerLeftNormalPixels[i].length-1
                 if @@lowerLeftNormalPixels[i][j] == 'x'
-                    @canvas[i+xOffset,j+yOffset] = forground
+                    @canvas[j+xOffset,i+yOffset] = forground
                 elsif(@@lowerLeftNormalPixels[i][j] == '_')
-                    @canvas[i+xOffset,j+yOffset] = corner
+                    @canvas[j+xOffset,i+yOffset] = corner
                 end
             end
         end
     end
 
     def renderLowerRightNormalCorner(cellX,cellY,forground,corner)
-        yOffset = cellX*CellSize+@border*CellSize+CornerSize
         xOffset = cellY*CellSize+@border*CellSize+CornerSize
+        yOffset = cellX*CellSize+@border*CellSize+CornerSize
         for i in 0..@@lowerRightNormalPixels.length-1
             for j in 0..@@lowerRightNormalPixels[i].length-1
                 if @@lowerRightNormalPixels[i][j] == 'x'
-                    @canvas[i+xOffset,j+yOffset] = forground
+                    @canvas[j+xOffset,i+yOffset] = forground
                 elsif(@@lowerRightNormalPixels[i][j] == '_')
-                    @canvas[i+xOffset,j+yOffset] = corner
+                    @canvas[j+xOffset,i+yOffset] = corner
                 end
             end
         end
@@ -572,8 +576,7 @@ forgroundCellType = CellType.new(ChunkyPNG::Color::rgb(0,0,0))
 
 #intialize the cell type groups
 backgroundPriorityType = PriorityType.new(backgroundCellType, backgroundCellType)
-#forgroundPriorityType = PriorityType.new(forgroundCellType, cornerCellType, smallEyeCellType)
-forgroundPriorityType = PriorityType.new(forgroundCellType, backgroundCellType)
+forgroundPriorityType = PriorityType.new(forgroundCellType, cornerCellType, smallEyeCellType, backgroundCellType)
 
 #initialize the 2d array of cells with their base black and white colors
 cells = Array.new(qr_array.length) { Array.new(qr_array[0].length) }
@@ -602,7 +605,7 @@ for i in 0..qr_array.length-2
     cross[i] = []
     for j in 0..qr_array[i].length-2
         case noise[i][j]
-        when "x"
+        when "x", "c", "e"
             cross[i][j] = Cross.new(cells[i][j], cells[i][j+1], cells[i+1][j], cells[i+1][j+1], forgroundPriorityType)
         else
             cross[i][j] = Cross.new(cells[i][j], cells[i][j+1], cells[i+1][j], cells[i+1][j+1], backgroundPriorityType)
@@ -749,13 +752,37 @@ for i in 0..cells.length-1
     end
 end
 
-#TODO initilize a canvas and render all the cells
-
-#Testing for ChunkyPNG drawings
+#initilize a canvas and render all the cells
 canvas = Canvas.new(cells[0].length, cells.length,3)
 for i in 0..cells.length-1
     for j in 0..cells[i].length-1
         canvas.render(i,j,cells[i][j])
     end
 end
-canvas.save("test.png")
+canvas.save("PrettyQR.png")
+
+#TODO remove debugging stuff once error is found
+testingCanvas = ChunkyPNG::Canvas.new(cells[0].length*7, cells.length*7, ChunkyPNG::Color::rgb(186,191,191))
+for i in 0..cells.length-1
+    for j in 0..cells[i].length-1
+        testingCanvas.rect(j*7,i*7,j*7+6,i*7+6,cells[i][j].getColor,cells[i][j].getColor)
+        
+        testingCanvas.set_pixel(j*7,i*7,cells[i][j].getUL.getColor)
+        testingCanvas.set_pixel(j*7+1,i*7,cells[i][j].getUL.getColor)
+        testingCanvas.set_pixel(j*7,i*7+1,cells[i][j].getUL.getColor)
+        
+        testingCanvas.set_pixel(j*7+6,i*7,cells[i][j].getUR.getColor)
+        testingCanvas.set_pixel(j*7+5,i*7,cells[i][j].getUR.getColor)
+        testingCanvas.set_pixel(j*7+6,i*7+1,cells[i][j].getUR.getColor)
+
+        testingCanvas.set_pixel(j*7+6,i*7+6,cells[i][j].getLR.getColor)
+        testingCanvas.set_pixel(j*7+5,i*7+6,cells[i][j].getLR.getColor)
+        testingCanvas.set_pixel(j*7+6,i*7+5,cells[i][j].getLR.getColor)
+
+        testingCanvas.set_pixel(j*7,i*7+6,cells[i][j].getLL.getColor)
+        testingCanvas.set_pixel(j*7+1,i*7+6,cells[i][j].getLL.getColor)
+        testingCanvas.set_pixel(j*7,i*7+5,cells[i][j].getLL.getColor)
+
+    end
+end
+testingCanvas.save("testing.png")
